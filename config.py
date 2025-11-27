@@ -1,4 +1,4 @@
-"""Configuration settings for SortApp.
+"""Configuration settings for Sort App.
 
 This module contains all configuration parameters including:
 - Dataset and working directory paths
@@ -42,7 +42,7 @@ LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
 MAX_PER_CLASS = 200
 
 # Application
-APP_TITLE = "SortApp"
+APP_TITLE = "Sort App"
 
 # Display settings
 DISPLAY_WIDTH = 480  # 4:3 ratio width
