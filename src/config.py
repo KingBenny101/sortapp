@@ -41,6 +41,12 @@ LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
 # Initial training limit per class from sorted dataset
 MAX_PER_CLASS = 200
 
+# Cold start settings
+ALLOW_COLD_START = True  # Set to True to allow starting without pre-labeled dataset
+MIN_SAMPLES_PER_CLASS = (
+    5  # Minimum samples per class before model training in cold start
+)
+
 # Application
 APP_TITLE = "Sort App"
 
@@ -51,7 +57,7 @@ DISPLAY_HEIGHT = 360  # 4:3 ratio height
 # Auto mode settings
 AUTO_MODE_WAIT_TIME = 1.0  # seconds between images in auto mode
 SKIP_AUTO_MODE_WAIT = True  # Set to True to skip wait time in auto mode
-BATCH_SIZE = 32  # Number of images to process in a batch for feature extraction
+BATCH_SIZE = 320  # Number of images to process in a batch for feature extraction
 USE_GPU = True  # Set to True to use GPU if available (CUDA)
 
 # Copy settings

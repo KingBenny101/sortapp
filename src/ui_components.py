@@ -25,6 +25,8 @@ from .active_learning import (
     save_learner,
     get_prediction,
     batch_teach,
+    create_learner_from_bootstrap,
+    check_can_bootstrap,
 )
 from .data_handler import (
     list_unlabeled_images,
@@ -129,7 +131,7 @@ def process_batch_auto(
     # Get predictions for all images
     try:
         probas = learner.predict_proba(features)
-    except Exception:
+    except (AttributeError, ValueError):
         # If model not ready, skip batch
         return 0
 
@@ -137,7 +139,7 @@ def process_batch_auto(
     labels = []
     processed_paths = []
 
-    for idx, (img_path, proba) in enumerate(zip(image_paths, probas)):
+    for img_path, proba in zip(image_paths, probas):
         p_useful = float(proba[config.CLASS_TO_LABEL["useful"]])
         p_useless = float(proba[config.CLASS_TO_LABEL["useless"]])
 
@@ -195,6 +197,12 @@ def page_label_images():
     feature_extractor, preprocess, device = get_resnet_feature_extractor()
     learner = init_or_load_learner(feature_extractor, preprocess, device)
 
+    # Initialize cold start tracking in session state
+    if "bootstrap_features" not in st.session_state:
+        st.session_state.bootstrap_features = []
+        st.session_state.bootstrap_labels = []
+        st.session_state.bootstrap_paths = []
+
     if "image_list" not in st.session_state:
         all_files = list_unlabeled_images(config.UNLABELED_DIR)
         processed = load_processed_images()
@@ -228,12 +236,39 @@ def page_label_images():
     feat = image_to_feature_vector_torch(
         original_img, feature_extractor, preprocess, device
     )
-    p_useful, p_useless = get_prediction(learner, feat)
+
+    # Get prediction (will be 0.5/0.5 if learner is None or not trained)
+    if learner is not None:
+        p_useful, p_useless = get_prediction(learner, feat)
+    else:
+        p_useful, p_useless = 0.5, 0.5
 
     # Centered title
     _, col2, _ = st.columns([1, 2, 1])
     with col2:
         st.title(config.APP_TITLE)
+
+    # Cold start status message
+    if learner is None:
+        _, col2, _ = st.columns([1, 2, 1])
+        with col2:
+            bootstrap_labels_array = np.array(st.session_state.bootstrap_labels)
+            if len(bootstrap_labels_array) > 0:
+                unique, counts = np.unique(bootstrap_labels_array, return_counts=True)
+                label_counts = dict(zip(unique, counts))
+                useful_count = label_counts.get(config.CLASS_TO_LABEL["useful"], 0)
+                useless_count = label_counts.get(config.CLASS_TO_LABEL["useless"], 0)
+                
+                st.warning(
+                    f"🔄 **Bootstrap Mode**: Collecting initial samples...\n\n"
+                    f"Useful: {useful_count}/{config.MIN_SAMPLES_PER_CLASS} | "
+                    f"Useless: {useless_count}/{config.MIN_SAMPLES_PER_CLASS}"
+                )
+            else:
+                st.info(
+                    f"🚀 **Cold Start**: Label at least {config.MIN_SAMPLES_PER_CLASS} "
+                    "images per class to train the model."
+                )
 
     # Model prediction scores centered
     _, col2, _ = st.columns([1, 2, 1])
@@ -313,7 +348,10 @@ def page_label_images():
                     st.rerun()
             else:
                 auto_button = st.button(
-                    "▶️ Auto Mode", key="btn_auto", use_container_width=True
+                    "▶️ Auto Mode",
+                    key="btn_auto",
+                    use_container_width=True,
+                    disabled=(learner is None),  # Disable in cold start
                 )
                 if auto_button:
                     st.session_state.auto_mode = True
@@ -323,20 +361,60 @@ def page_label_images():
                 "💾 Save Model",
                 key="btn_save",
                 use_container_width=True,
-                disabled=auto_mode_active,
+                disabled=auto_mode_active or (learner is None),  # Disable if no model
             )
 
-    if save_button:
+    if save_button and learner is not None:
         save_learner(learner)
         st.success("Model saved.")
 
     def apply_label(label_int: int):
-        learner.teach(X=feat.reshape(1, -1), y=np.array([label_int], dtype=np.int64))
-        if auto_copy:
-            copy_labeled_image(img_path, label_int)
-        save_processed_images([img_path])
-        if auto_save:
-            save_learner(learner)
+        nonlocal learner
+        
+        # Cold start mode: collect bootstrap samples
+        if learner is None:
+            st.session_state.bootstrap_features.append(feat)
+            st.session_state.bootstrap_labels.append(label_int)
+            st.session_state.bootstrap_paths.append(img_path)
+            
+            # Check if we can bootstrap the model
+            bootstrap_labels_array = np.array(st.session_state.bootstrap_labels)
+            if check_can_bootstrap(bootstrap_labels_array):
+                # Create model from bootstrap samples
+                bootstrap_features_array = np.stack(st.session_state.bootstrap_features)
+                learner = create_learner_from_bootstrap(
+                    bootstrap_features_array, bootstrap_labels_array
+                )
+                save_learner(learner)
+                
+                # Save all bootstrap paths as processed
+                save_processed_images(st.session_state.bootstrap_paths)
+                
+                # Copy bootstrap images if enabled
+                if auto_copy:
+                    for path, label in zip(
+                        st.session_state.bootstrap_paths, st.session_state.bootstrap_labels
+                    ):
+                        copy_labeled_image(path, label)
+                
+                st.success(
+                    f"🎉 Model initialized with {len(bootstrap_labels_array)} samples! "
+                    "Now using incremental learning."
+                )
+            else:
+                # Just save as processed for now
+                save_processed_images([img_path])
+                if auto_copy:
+                    copy_labeled_image(img_path, label_int)
+        else:
+            # Normal incremental learning
+            learner.teach(X=feat.reshape(1, -1), y=np.array([label_int], dtype=np.int64))
+            if auto_copy:
+                copy_labeled_image(img_path, label_int)
+            save_processed_images([img_path])
+            if auto_save:
+                save_learner(learner)
+        
         st.session_state.history.append(
             {"path": img_path, "label_int": label_int, "proba": p_useful}
         )
