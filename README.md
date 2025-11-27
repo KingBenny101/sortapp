@@ -11,6 +11,7 @@ A useful/useless image classifier with incremental learning capabilities, design
 - **ResNet50 Feature Extraction**: Pre-trained CNN for robust image features
 - **Interactive Web Interface**: Streamlit-based UI for easy labeling
 - **Persistent Storage**: Saves model state and labeling history
+- **Modular Architecture**: Clean separation of concerns across multiple files
 
 ## Architecture
 
@@ -23,7 +24,8 @@ A useful/useless image classifier with incremental learning capabilities, design
 
 ### Core ML & Deep Learning
 
-- `tensorflow` - Deep learning framework, ResNet50 model
+- `torch` - PyTorch deep learning framework
+- `torchvision` - ResNet50 model and image transformations
 - `scikit-learn` - SGDClassifier, StandardScaler, preprocessing
 - `modAL-python` - Active learning framework
 
@@ -54,7 +56,7 @@ conda activate whatsapp-classifier
 ### 2. Install Dependencies
 
 ```bash
-pip install tensorflow scikit-learn modAL-python streamlit pillow pandas joblib numpy
+pip install torch torchvision scikit-learn modAL-python streamlit pillow pandas joblib numpy
 ```
 
 ### 3. Prepare Dataset Structure
@@ -89,7 +91,7 @@ streamlit run app.py
 - Model predictions are shown before labeling
 - Click "Useful 👍" or "Useless 👎" to label images
 - Use "Skip" to move to next image without labeling
-- Labeled images are automatically moved to appropriate folders
+- Labeled images are automatically copied to `labeled_output/`
 
 ### 4. Model Management
 
@@ -99,12 +101,12 @@ streamlit run app.py
 
 ## Configuration
 
-Update paths in `app.py` if needed:
+Update paths in `config.py` to match your dataset location:
 
 ```python
-BASE_DIR = Path("/home/kingbenny101/code/whatsapp-dataset")
-SORTED_DIR = BASE_DIR / "sorted"
-UNLABELED_DIR = BASE_DIR / "images"
+BASE_DATASET_DIR = Path("/home/kingbenny101/code/whatsapp-dataset")
+SORTED_DIR = BASE_DATASET_DIR / "sorted"
+UNLABELED_DIR = BASE_DATASET_DIR / "images"
 ```
 
 ## Incremental Learning Details
@@ -118,11 +120,33 @@ UNLABELED_DIR = BASE_DIR / "images"
 
 ```
 whatsapp-incremental-learning/
-├── app.py                    # Main Streamlit application
-├── README.md                 # This file
-├── requirements.txt          # Python dependencies
-└── .gitignore               # Git ignore patterns
+├── app.py                    # Main Streamlit application entry point
+├── config.py                 # Configuration and path settings
+├── feature_extraction.py     # ResNet50 feature extraction utilities
+├── data_handler.py          # Data loading and persistence functions
+├── active_learning.py       # Active learning model management
+├── logging_utils.py         # Label logging and file operations
+├── ui_components.py         # Streamlit UI page components
+├── README.md                # This file
+├── requirements.txt         # Python dependencies
+├── .gitignore              # Git ignore patterns
+├── labeled_output/         # Copied labeled images
+│   ├── useful/             # Images labeled as useful
+│   └── useless/            # Images labeled as useless
+├── models/                 # Saved model files
+├── labels_log.csv         # Labeling history log
+└── processed_images.csv   # Processed images tracking
 ```
+
+## Module Descriptions
+
+- **`app.py`**: Main entry point with Streamlit page navigation
+- **`config.py`**: Centralized configuration for paths and settings
+- **`feature_extraction.py`**: PyTorch ResNet50 feature extraction
+- **`data_handler.py`**: Dataset loading, image listing, and CSV persistence
+- **`active_learning.py`**: modAL learner initialization and model management
+- **`logging_utils.py`**: Label logging and file copying utilities
+- **`ui_components.py`**: Streamlit UI pages and interaction logic
 
 ## Contributing
 
