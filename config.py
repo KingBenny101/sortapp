@@ -1,27 +1,56 @@
+"""Configuration settings for SortApp.
+
+This module contains all configuration parameters including:
+- Dataset and working directory paths
+- Data, output, and temp directory paths
+- Model and data file locations
+- Class labels and mappings
+- Application settings (display, auto mode, copy behavior)
+"""
+
 from pathlib import Path
 
-# Directories
-SCRIPT_DIR = Path(__file__).resolve().parent
+# Training dataset directory (pre-labeled)
+DATASET_DIR = Path("/home/kingbenny101/code/whatsapp-dataset/sorted")
 
-BASE_DATASET_DIR = Path("/home/kingbenny101/code/whatsapp-dataset")
-SORTED_DIR = BASE_DATASET_DIR / "sorted"
-UNLABELED_DIR = BASE_DATASET_DIR / "images"
+# Working directory for unlabeled images to classify
+UNLABELED_DIR = Path("/home/kingbenny101/code/whatsapp-dataset/images")
 
-# Where new labeled images are copied
-LABELED_OUTPUT_BASE = SCRIPT_DIR / "labeled_output"
+# Data directory (model and processed images tracking)
+# Uses current working directory if not specified
+DATA_DIR = Path.cwd() / "data"
 
-# Model + logs
-MODEL_PATH = SCRIPT_DIR / "models" / "modal_resnet50_sgd.joblib"
-LABEL_LOG_CSV = SCRIPT_DIR / "labels_log.csv"
-PROCESSED_IMAGES_CSV = SCRIPT_DIR / "processed_images.csv"
+# Output directory (classified images)
+# Uses current working directory if not specified
+OUTPUT_DIR = Path.cwd() / "output"
+OUTPUT_USEFUL_DIR = OUTPUT_DIR / "useful"
+OUTPUT_USELESS_DIR = OUTPUT_DIR / "useless"
+
+# Temp directory (cached resized images)
+# Uses current working directory if not specified
+TEMP_DIR = Path.cwd() / "temp"
+
+# File paths
+MODEL_PATH = DATA_DIR / "modal_resnet50_sgd.joblib"
+PROCESSED_IMAGES_CSV = DATA_DIR / "processed_images.csv"
 
 # Classes
 CLASS_TO_LABEL = {"useless": 0, "useful": 1}
 LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
 
-# Initial training limit per class from /sorted
+# Initial training limit per class from sorted dataset
 MAX_PER_CLASS = 200
 
-# UI
-APP_TITLE = "WhatsApp Image Incremental Classifier"
-FIXED_IMAGE_HEIGHT = 400  # px
+# Application
+APP_TITLE = "SortApp"
+
+# Display settings
+DISPLAY_WIDTH = 480  # 4:3 ratio width
+DISPLAY_HEIGHT = 360  # 4:3 ratio height
+
+# Auto mode settings
+AUTO_MODE_WAIT_TIME = 1.0  # seconds between images in auto mode
+SKIP_AUTO_MODE_WAIT = True  # Set to True to skip wait time in auto mode
+
+# Copy settings
+COPY_USELESS_IMAGES = False  # Set to True to also copy useless images to output
