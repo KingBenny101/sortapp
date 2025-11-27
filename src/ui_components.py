@@ -14,18 +14,18 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 
-import config
-from feature_extraction import (
+from . import config
+from .feature_extraction import (
     get_resnet_feature_extractor,
     image_to_feature_vector_torch,
 )
-from active_learning import init_or_load_learner, save_learner, get_prediction
-from data_handler import (
+from .active_learning import init_or_load_learner, save_learner, get_prediction
+from .data_handler import (
     list_unlabeled_images,
     load_processed_images,
     save_processed_images,
 )
-from file_utils import copy_labeled_image
+from .file_utils import copy_labeled_image
 
 
 def cleanup_temp_directory():

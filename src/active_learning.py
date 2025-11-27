@@ -16,8 +16,8 @@ from sklearn.pipeline import make_pipeline
 from modAL.models import ActiveLearner
 from modAL.uncertainty import uncertainty_sampling
 
-import config
-from data_handler import load_labeled_dataset
+from . import config
+from .data_handler import load_labeled_dataset
 
 
 def create_base_estimator():

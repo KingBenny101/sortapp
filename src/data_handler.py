@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-import config
-from feature_extraction import load_and_featurize_image
+from . import config
+from .feature_extraction import load_and_featurize_image
 
 
 def load_labeled_dataset(

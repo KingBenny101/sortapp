@@ -7,7 +7,7 @@ and managing relabeling scenarios.
 import os
 import shutil
 
-import config
+from . import config
 
 
 def copy_labeled_image(img_path: str, label_int: int):

@@ -6,8 +6,8 @@ the three main pages: Label Images, Settings, and Info.
 
 import streamlit as st
 
-import config
-from ui_components import page_label_images, page_settings, page_info
+from src import config
+from src.ui_components import page_label_images, page_settings, page_info
 
 # Configure pages with custom labels
 st.set_page_config(
