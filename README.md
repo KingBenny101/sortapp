@@ -1,4 +1,4 @@
-# SortApp
+# Sort App
 
 > **Note**: This entire project is vibecoded - built through iterative development and experimentation.
 
