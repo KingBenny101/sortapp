@@ -51,6 +51,8 @@ DISPLAY_HEIGHT = 360  # 4:3 ratio height
 # Auto mode settings
 AUTO_MODE_WAIT_TIME = 1.0  # seconds between images in auto mode
 SKIP_AUTO_MODE_WAIT = True  # Set to True to skip wait time in auto mode
+BATCH_SIZE = 32  # Number of images to process in a batch for feature extraction
+USE_GPU = True  # Set to True to use GPU if available (CUDA)
 
 # Copy settings
 COPY_USELESS_IMAGES = False  # Set to True to also copy useless images to output

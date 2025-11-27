@@ -18,8 +18,14 @@ from . import config
 from .feature_extraction import (
     get_resnet_feature_extractor,
     image_to_feature_vector_torch,
+    batch_extract_features,
 )
-from .active_learning import init_or_load_learner, save_learner, get_prediction
+from .active_learning import (
+    init_or_load_learner,
+    save_learner,
+    get_prediction,
+    batch_teach,
+)
 from .data_handler import (
     list_unlabeled_images,
     load_processed_images,
@@ -85,6 +91,78 @@ def resize_image_to_display(img_path, target_width=480, target_height=360):
     img_resized.save(cache_path, "JPEG", quality=85)
 
     return str(cache_path)
+
+
+def process_batch_auto(
+    image_paths, learner, feature_extractor, preprocess, device, auto_copy=True
+):
+    """Process a batch of images in auto mode with batch feature extraction and model updates.
+
+    Args:
+        image_paths (List[str]): List of image paths to process
+        learner (ActiveLearner): The active learning model
+        feature_extractor: ResNet50 feature extractor
+        preprocess: Image preprocessing transforms
+        device: Torch device (CPU/GPU)
+        auto_copy (bool): Whether to copy labeled images to output
+
+    Returns:
+        int: Number of images successfully processed
+
+    Note:
+        Significantly faster than processing one-by-one:
+        - Batch feature extraction on GPU
+        - Single model update for all samples
+        - Deferred file operations
+    """
+    if not image_paths:
+        return 0
+
+    # Batch extract features
+    features = batch_extract_features(
+        image_paths, feature_extractor, preprocess, device
+    )
+
+    if len(features) == 0:
+        return 0
+
+    # Get predictions for all images
+    try:
+        probas = learner.predict_proba(features)
+    except Exception:
+        # If model not ready, skip batch
+        return 0
+
+    # Determine labels based on probabilities
+    labels = []
+    processed_paths = []
+
+    for idx, (img_path, proba) in enumerate(zip(image_paths, probas)):
+        p_useful = float(proba[config.CLASS_TO_LABEL["useful"]])
+        p_useless = float(proba[config.CLASS_TO_LABEL["useless"]])
+
+        # Auto-label based on highest probability
+        label_int = (
+            config.CLASS_TO_LABEL["useful"]
+            if p_useful > p_useless
+            else config.CLASS_TO_LABEL["useless"]
+        )
+
+        labels.append(label_int)
+        processed_paths.append(img_path)
+
+        # Copy to output if enabled
+        if auto_copy:
+            copy_labeled_image(img_path, label_int)
+
+    # Batch teach the model
+    if len(labels) > 0:
+        batch_teach(learner, features, np.array(labels, dtype=np.int64))
+
+    # Save processed images list
+    save_processed_images(processed_paths)
+
+    return len(processed_paths)
 
 
 def page_label_images():
@@ -282,35 +360,40 @@ def page_label_images():
 
     # Auto mode processing
     if st.session_state.get("auto_mode", False):
-        if not config.SKIP_AUTO_MODE_WAIT:
-            import time
+        # Get remaining images for batch processing
+        remaining_images = image_list[idx:]
+        batch_size = min(config.BATCH_SIZE, len(remaining_images))
 
-            # Show progress bar for wait time
+        if batch_size > 0:
+            # Show progress
             _, col2, _ = st.columns([1, 2, 1])
             with col2:
-                progress_text = st.empty()
+                st.info(f"🚀 Processing batch of {batch_size} images...")
                 progress_bar = st.progress(0)
 
-                # Countdown with progress bar
-                steps = 20  # Number of progress updates
-                wait_per_step = config.AUTO_MODE_WAIT_TIME / steps
+            # Process batch
+            batch_paths = remaining_images[:batch_size]
+            processed_count = process_batch_auto(
+                batch_paths, learner, feature_extractor, preprocess, device, auto_copy
+            )
 
-                for i in range(steps):
-                    progress = (i + 1) / steps
-                    time_remaining = config.AUTO_MODE_WAIT_TIME * (1 - progress)
-                    progress_text.text(f"Next image in {time_remaining:.1f}s...")
-                    progress_bar.progress(progress)
-                    time.sleep(wait_per_step)
+            # Update progress
+            progress_bar.progress(1.0)
 
-                progress_text.empty()
-                progress_bar.empty()
+            # Save model after batch
+            if auto_save:
+                save_learner(learner)
 
-        # Auto-label based on highest probability
-        if p_useful > p_useless:
-            apply_label(config.CLASS_TO_LABEL["useful"])
-        else:
-            apply_label(config.CLASS_TO_LABEL["useless"])
-        st.session_state.index += 1
+            # Update index and rerun
+            st.session_state.index += processed_count
+
+            # Show completion message
+            with col2:
+                st.success(f"✅ Processed {processed_count} images")
+                if st.session_state.index >= len(image_list):
+                    st.balloons()
+                    st.session_state.auto_mode = False
+
         st.rerun()
 
 

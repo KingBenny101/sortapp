@@ -126,3 +126,22 @@ def get_prediction(learner: ActiveLearner, feat: np.ndarray) -> tuple[float, flo
         # ValueError: Invalid feature shape or unfitted estimator
         # IndexError: Class label index out of bounds
         return 0.5, 0.5
+
+
+def batch_teach(
+    learner: ActiveLearner, features: np.ndarray, labels: np.ndarray
+) -> None:
+    """Teach the model with multiple samples at once.
+
+    Args:
+        learner (ActiveLearner): The active learning model
+        features (np.ndarray): Array of shape (n_samples, 2048) containing feature vectors
+        labels (np.ndarray): Array of shape (n_samples,) containing integer labels
+
+    Note:
+        More efficient than calling teach() multiple times individually.
+        Updates the model with all samples in a single batch.
+    """
+    if len(features) == 0:
+        return
+    learner.teach(X=features, y=labels)
