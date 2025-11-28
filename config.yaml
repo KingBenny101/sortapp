@@ -3,15 +3,15 @@
 
 # Directories
 # REQUIRED: unlabeled_dir must be provided
-unlabeled_dir: ''
+unlabeled_dir: /mnt/e/Important/Whatsapp/27112025/images
 # OPTIONAL: dataset_dir - if not provided, app runs in cold start mode
-dataset_dir: ''
-output_dir: ''
+dataset_dir: /home/kingbenny101/code/whatsapp-dataset
+output_dir: /mnt/e/Important/Whatsapp/27112025
 # data_dir: data (relative to script directory)
 # temp_dir: temp (relative to script directory)
 
 # Training settings
-max_per_class: 2000
+max_per_class: 200
 
 # Cold start settings
 allow_cold_start: true
@@ -27,7 +27,7 @@ display_height: 360
 # Auto mode settings
 auto_mode_wait_time: 1.0
 skip_auto_mode_wait: true
-batch_size: 512
+batch_size: 2056
 use_gpu: true
 
 # Copy settings
