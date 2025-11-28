@@ -258,7 +258,7 @@ def page_label_images():
                 label_counts = dict(zip(unique, counts))
                 useful_count = label_counts.get(config.CLASS_TO_LABEL["useful"], 0)
                 useless_count = label_counts.get(config.CLASS_TO_LABEL["useless"], 0)
-                
+
                 st.warning(
                     f"🔄 **Bootstrap Mode**: Collecting initial samples...\n\n"
                     f"Useful: {useful_count}/{config.MIN_SAMPLES_PER_CLASS} | "
@@ -292,9 +292,7 @@ def page_label_images():
     with st.container():
         _, col2, _ = st.columns([1, 2, 1])
         with col2:
-            st.image(
-                display_img_path, width=config.DISPLAY_WIDTH, use_container_width=False
-            )
+            st.image(display_img_path, width=config.DISPLAY_WIDTH)
 
     # Button layout - centered
     _, col2, _ = st.columns([1, 2, 1])
@@ -308,14 +306,14 @@ def page_label_images():
             label_useful = st.button(
                 "✅ Useful",
                 key="btn_useful",
-                use_container_width=True,
+                width="stretch",
                 disabled=auto_mode_active,
             )
         with button_row1[1]:
             label_useless = st.button(
                 "❌ Useless",
                 key="btn_useless",
-                use_container_width=True,
+                width="stretch",
                 disabled=auto_mode_active,
             )
 
@@ -325,14 +323,14 @@ def page_label_images():
             btn_prev = st.button(
                 "⬅️ Back",
                 key="btn_prev",
-                use_container_width=True,
+                width="stretch",
                 disabled=auto_mode_active,
             )
         with button_row2[1]:
             skip = st.button(
                 "⏭️ Skip",
                 key="btn_skip",
-                use_container_width=True,
+                width="stretch",
                 disabled=auto_mode_active,
             )
 
@@ -341,7 +339,7 @@ def page_label_images():
         with button_row3[0]:
             if auto_mode_active:
                 stop_auto = st.button(
-                    "⏸️ Stop Auto", key="btn_stop_auto", use_container_width=True
+                    "⏸️ Stop Auto", key="btn_stop_auto", width="stretch"
                 )
                 if stop_auto:
                     st.session_state.auto_mode = False
@@ -350,7 +348,7 @@ def page_label_images():
                 auto_button = st.button(
                     "▶️ Auto Mode",
                     key="btn_auto",
-                    use_container_width=True,
+                    width="stretch",
                     disabled=(learner is None),  # Disable in cold start
                 )
                 if auto_button:
@@ -360,7 +358,7 @@ def page_label_images():
             save_button = st.button(
                 "💾 Save Model",
                 key="btn_save",
-                use_container_width=True,
+                width="stretch",
                 disabled=auto_mode_active or (learner is None),  # Disable if no model
             )
 
@@ -370,13 +368,13 @@ def page_label_images():
 
     def apply_label(label_int: int):
         nonlocal learner
-        
+
         # Cold start mode: collect bootstrap samples
         if learner is None:
             st.session_state.bootstrap_features.append(feat)
             st.session_state.bootstrap_labels.append(label_int)
             st.session_state.bootstrap_paths.append(img_path)
-            
+
             # Check if we can bootstrap the model
             bootstrap_labels_array = np.array(st.session_state.bootstrap_labels)
             if check_can_bootstrap(bootstrap_labels_array):
@@ -386,17 +384,18 @@ def page_label_images():
                     bootstrap_features_array, bootstrap_labels_array
                 )
                 save_learner(learner)
-                
+
                 # Save all bootstrap paths as processed
                 save_processed_images(st.session_state.bootstrap_paths)
-                
+
                 # Copy bootstrap images if enabled
                 if auto_copy:
                     for path, label in zip(
-                        st.session_state.bootstrap_paths, st.session_state.bootstrap_labels
+                        st.session_state.bootstrap_paths,
+                        st.session_state.bootstrap_labels,
                     ):
                         copy_labeled_image(path, label)
-                
+
                 st.success(
                     f"🎉 Model initialized with {len(bootstrap_labels_array)} samples! "
                     "Now using incremental learning."
@@ -408,13 +407,15 @@ def page_label_images():
                     copy_labeled_image(img_path, label_int)
         else:
             # Normal incremental learning
-            learner.teach(X=feat.reshape(1, -1), y=np.array([label_int], dtype=np.int64))
+            learner.teach(
+                X=feat.reshape(1, -1), y=np.array([label_int], dtype=np.int64)
+            )
             if auto_copy:
                 copy_labeled_image(img_path, label_int)
             save_processed_images([img_path])
             if auto_save:
                 save_learner(learner)
-        
+
         st.session_state.history.append(
             {"path": img_path, "label_int": label_int, "proba": p_useful}
         )

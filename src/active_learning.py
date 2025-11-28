@@ -33,8 +33,9 @@ def create_base_estimator():
     clf = SGDClassifier(
         loss="log_loss",
         learning_rate="optimal",
-        max_iter=1,  # small because we update often
+        max_iter=1000,  # increased to avoid convergence warnings
         warm_start=True,
+        tol=1e-3,
     )
     return make_pipeline(StandardScaler(), clf)
 

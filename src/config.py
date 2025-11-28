@@ -11,10 +11,10 @@ This module contains all configuration parameters including:
 from pathlib import Path
 
 # Training dataset directory (pre-labeled)
-DATASET_DIR = Path("/home/kingbenny101/code/whatsapp-dataset/sorted")
+DATASET_DIR = Path("/home/kingbenny101/code/whatsapp-dataset/")
 
 # Working directory for unlabeled images to classify
-UNLABELED_DIR = Path("/home/kingbenny101/code/whatsapp-dataset/images")
+UNLABELED_DIR = Path("/mnt/e/Important/Whatsapp/27112025/images")
 
 # Data directory (model and processed images tracking)
 # Uses current working directory if not specified
@@ -22,7 +22,7 @@ DATA_DIR = Path.cwd() / "data"
 
 # Output directory (classified images)
 # Uses current working directory if not specified
-OUTPUT_DIR = Path.cwd() / "output"
+OUTPUT_DIR = Path("/mnt/e/Important/Whatsapp/27112025")
 OUTPUT_USEFUL_DIR = OUTPUT_DIR / "useful"
 OUTPUT_USELESS_DIR = OUTPUT_DIR / "useless"
 
@@ -39,7 +39,7 @@ CLASS_TO_LABEL = {"useless": 0, "useful": 1}
 LABEL_TO_CLASS = {v: k for k, v in CLASS_TO_LABEL.items()}
 
 # Initial training limit per class from sorted dataset
-MAX_PER_CLASS = 200
+MAX_PER_CLASS = 2000
 
 # Cold start settings
 ALLOW_COLD_START = True  # Set to True to allow starting without pre-labeled dataset
@@ -57,7 +57,7 @@ DISPLAY_HEIGHT = 360  # 4:3 ratio height
 # Auto mode settings
 AUTO_MODE_WAIT_TIME = 1.0  # seconds between images in auto mode
 SKIP_AUTO_MODE_WAIT = True  # Set to True to skip wait time in auto mode
-BATCH_SIZE = 320  # Number of images to process in a batch for feature extraction
+BATCH_SIZE = 512  # Number of images to process in a batch for feature extraction
 USE_GPU = True  # Set to True to use GPU if available (CUDA)
 
 # Copy settings
