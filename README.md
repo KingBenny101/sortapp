@@ -153,8 +153,6 @@ Edit `config.py` to customize:
 
 ## How to Use
 
-### 1. Label Images Page
-
 - Images from `UNLABELED_DIR` are presented with model predictions
 - Click **Useful 👍** or **Useless 👎** to label images
 - Use **Skip** to move to next image without labeling
@@ -167,38 +165,6 @@ Edit `config.py` to customize:
   - Processes images in batches for maximum speed
 - Labeled images are copied to `OUTPUT_USEFUL_DIR` (and `OUTPUT_USELESS_DIR` if configured)
 
-### 2. Settings Page
-
-- View and configure all paths
-- Check model status and training progress
-- Monitor processed images count
-
-### 3. Info Page
-
-- View system information
-- Check configuration details
-- Review active learning statistics
-
-## Performance
-
-### GPU Acceleration
-
-- Automatically uses CUDA GPU if available (controlled by `USE_GPU` setting)
-- **CPU**: ~0.3-0.5 sec/image
-- **GPU**: ~0.02-0.05 sec/image (40-100x faster)
-
-### Batch Processing
-
-- Auto mode processes multiple images simultaneously
-- Configurable batch size (default: 32 images)
-- Significantly faster than single-image processing
-
-### Expected Throughput
-
-| Hardware   | Speed             | 1000 Images    |
-| ---------- | ----------------- | -------------- |
-| CPU only   | ~2-3 images/sec   | ~5-8 minutes   |
-| GPU (CUDA) | ~20-50 images/sec | ~30-90 seconds |
 
 ## Model Management
 
